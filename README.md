@@ -2,6 +2,6 @@
 
 ## .env format
 
-HOST={HOST}
-PORT={PORT}
-SERVICE_REGISTRY=http://{HOST}:{PORT}
+- HOST={HOST}
+- PORT={PORT}
+- SERVICE_REGISTRY=http://{HOST}:{PORT}
