@@ -1,7 +1,14 @@
 import express from "express";
 import cors from "cors";
-import { initialize } from "./api/startup";
-import { NODE_ID } from "./utils/Constants";
+const process = require("process");
+import { initialize } from "./api/startup.service";
+import {
+  IS_INTERRUPTED,
+  IS_MASTER,
+  NODE_ID,
+  SELF,
+  SERVICES,
+} from "./utils/Constants";
 
 import dotenv from "dotenv";
 import { AddressInfo } from "net";
@@ -18,15 +25,31 @@ app.use(
   })
 );
 
-import bullyAlgoCtrl from "./controllers/bully";
-import proposerCtrl from "./controllers/proposer";
-import acceptorCtrl from "./controllers/acceptor";
-import learnerCtrl from "./controllers/learner";
+import bullyAlgoCtrl from "./controllers/election.controller";
+import proposerCtrl from "./controllers/proposer.controller";
+import acceptorCtrl from "./controllers/acceptor.controller";
+import learnerCtrl from "./controllers/learner.controller";
 
 app.use("/api/election", bullyAlgoCtrl);
 app.use("/api/proposer", proposerCtrl);
 app.use("/api/acceptor", acceptorCtrl);
 app.use("/api/learner", learnerCtrl);
+
+app.get("/health-check", (req, res) => {
+  res.status(200).json({ response: "OK" });
+});
+
+app.get("/info", (req, res) => {
+  let info = {
+    is_master: app.get(IS_MASTER),
+    nodeId: app.get(NODE_ID),
+    self: app.get(SELF),
+    is_interrupted: app.get(IS_INTERRUPTED),
+    services: app.get(SERVICES),
+  };
+
+  res.status(200).json({ message: info });
+});
 
 app.use((req, res, next) => {
   res.status(404);
@@ -37,11 +60,13 @@ app.use((req, res, next) => {
   });
 });
 
-const server = app.listen(process.env.PORT, () => {
+const server = app.listen(process.argv[2] || process.env.PORT, () => {
   const { address, port } = server.address() as AddressInfo;
-  initialize(app, address, port);
+  initialize(address, port);
 
   console.log(
     `API id: ${app.get(NODE_ID)}, listening on: http://${address}:${port}`
   );
 });
+
+export default app;
