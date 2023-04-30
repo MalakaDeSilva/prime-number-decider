@@ -6,7 +6,7 @@ import {
   ELECTION_ROUTE,
   GET_SERVICES_ROUTE,
   HEALTH_CHECK_ROUTE,
-  IS_INTERRUPTED,
+  IS_ELECTION_STOPPED,
   IS_MASTER,
   MARK_AS_MASTER,
   MASTER,
@@ -22,7 +22,7 @@ interface ServerResponse {
 }
 
 export function startElection(app: express.Application, nodeId: string) {
-  console.log("Election is started by Node: " + nodeId);
+  //console.log("Election is started by Node: " + nodeId);
 
   getServices(process.env.SERVICE_REGISTRY + GET_SERVICES_ROUTE, (services) => {
     app.set(SERVICES, services);
@@ -34,7 +34,7 @@ export function startElection(app: express.Application, nodeId: string) {
 
     let promises: any[] = [];
 
-    if (!(app.get(IS_INTERRUPTED) as boolean)) {
+    if (!(app.get(IS_ELECTION_STOPPED) as boolean)) {
       services.forEach((service) => {
         if (parseInt(app.get(NODE_ID)) < parseInt(service.id)) {
           promises.push(
@@ -47,8 +47,7 @@ export function startElection(app: express.Application, nodeId: string) {
       });
 
       if (promises.length > 0) {
-        /* if (!(app.get(IS_INTERRUPTED) as boolean)) {
-          app.set(IS_INTERRUPTED, false); // Reset interrupt value to false
+        /* if (!(app.get(IS_ELECTION_STOPPED) as boolean)) {
           cancelTokenSource.cancel("Election Stopped"); // Stop resolving promises
         } */
 
@@ -57,16 +56,7 @@ export function startElection(app: express.Application, nodeId: string) {
             axios.spread((...responses) => {
               let nodesAlive = false; // Assume all nodes are dead
 
-              /* if (!(app.get(IS_INTERRUPTED) as boolean)) {
-                app.set(IS_INTERRUPTED, false); // Reset interrupt value to false
-                throw new Error("Election Stopped"); // Interrupt function execution if election is stopped
-              } */
-
               responses.forEach((resp) => {
-                /* if (!(app.get(IS_INTERRUPTED) as boolean)) {
-                  app.set(IS_INTERRUPTED, false); // Reset interrupt value to false
-                  throw new Error("Election Stopped"); // Interrupt function execution if election is stopped
-                } */
 
                 if (resp.data.message == "OK") {
                   nodesAlive = true; // If at least one node is alive, change to "true"
@@ -79,21 +69,25 @@ export function startElection(app: express.Application, nodeId: string) {
                 app.set(IS_MASTER, true); // Set self as the master
                 app.set(MASTER, app.get(SELF) as Service); // Set master as the self
                 sendCoordinatorMessage(app.get(SELF) as Service);
+                stopElection();
               }
             })
           )
           .catch((error) => {
-            console.error(error);
+            if (axios.isCancel(error)) {
+              console.log('Promise canceled:', error.message);
+            } else {
+              console.log('Error:', error.message);
+            }
           });
       } else {
         // No node has a higher id than Self
         // Self is the master
         app.set(IS_MASTER, true); // Set self as the master
         app.set(MASTER, app.get(SELF) as Service); // Set master as the self
+        stopElection();
         sendCoordinatorMessage(app.get(SELF) as Service);
       }
-    } else {
-      app.set(IS_INTERRUPTED, false); // Reset interrupt value to false
     }
   });
 }
@@ -124,13 +118,17 @@ export function sendCoordinatorMessage(node: Service) {
         }
       })
       .catch((error) => {
-        console.error(error);
+        if (axios.isCancel(error)) {
+          console.log('Promise canceled:', error.message);
+        } else {
+          console.log('Error:', error.message);
+        }
       });
   });
 }
 
 export function stopElection() {
-  app.set(IS_INTERRUPTED, true);
+  app.set(IS_ELECTION_STOPPED, true);
 }
 
 export function updateRegistryWithNewMaster(node: Service) {

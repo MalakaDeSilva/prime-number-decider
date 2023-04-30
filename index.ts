@@ -3,7 +3,7 @@ import cors from "cors";
 const process = require("process");
 import { initialize } from "./api/startup.service";
 import {
-  IS_INTERRUPTED,
+  IS_ELECTION_STOPPED,
   IS_MASTER,
   MASTER,
   NODE_ID,
@@ -30,6 +30,7 @@ import bullyAlgoCtrl from "./controllers/election.controller";
 import proposerCtrl from "./controllers/proposer.controller";
 import acceptorCtrl from "./controllers/acceptor.controller";
 import learnerCtrl from "./controllers/learner.controller";
+import { startElection } from "./api/election.service";
 
 app.use("/api/election", bullyAlgoCtrl);
 app.use("/api/proposer", proposerCtrl);
@@ -45,7 +46,7 @@ app.get("/info", (req, res) => {
     is_master: app.get(IS_MASTER),
     nodeId: app.get(NODE_ID),
     self: app.get(SELF),
-    is_interrupted: app.get(IS_INTERRUPTED),
+    is_election_stopped: app.get(IS_ELECTION_STOPPED),
     services: app.get(SERVICES),
     master: app.get(MASTER),
   };
@@ -65,6 +66,13 @@ app.use((req, res, next) => {
 const server = app.listen(process.argv[2] || process.env.PORT, () => {
   const { address, port } = server.address() as AddressInfo;
   initialize(address, port);
+
+  setTimeout(() => {
+    if (!app.get(IS_ELECTION_STOPPED) as boolean) {
+      console.log(`Node ${app.get(NODE_ID)} is starting own election.`);
+      startElection(app, app.get(NODE_ID));
+    }
+  }, process.argv[2]);
 
   console.log(
     `API id: ${app.get(NODE_ID)}, listening on: http://${address}:${port}`

@@ -2,7 +2,7 @@ import app from "../index";
 import { startElection, stopElection } from "../api/election.service";
 import express from "express";
 import { Service } from "../model/service";
-import { IS_MASTER, MASTER } from "../utils/Constants";
+import { IS_ELECTION_STOPPED, IS_MASTER, MASTER, NODE_ID } from "../utils/Constants";
 
 const router = express.Router();
 
@@ -10,7 +10,11 @@ router.get("/:id", (req, res) => {
   // TODO: implement bully algorithm
   let senderId = req.params.id;
 
-  startElection(app, senderId);
+  if (!(app.get(IS_ELECTION_STOPPED)) as boolean) {
+    console.log(`Node ${app.get(NODE_ID)} is starting election triggered by Node ${senderId}.`);
+    
+    startElection(app, senderId);
+  }
 
   res.status(200).json({ message: "OK" });
 });

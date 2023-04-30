@@ -3,7 +3,7 @@ import { ServiceType } from "../model/service";
 import { extractUri, randomIntFromInterval } from "../utils/Utils";
 import {
   GET_SERVICES_ROUTE,
-  IS_INTERRUPTED,
+  IS_ELECTION_STOPPED,
   IS_MASTER,
   MASTER,
   NODE_ID,
@@ -25,8 +25,6 @@ export function initialize(host: string, port: number) {
 
   app.set(NODE_ID, nodeId);
   app.set(SELF, new Service(nodeId, extractUri(host, port), ""));
-
-  app.set(IS_INTERRUPTED, false); // Set IsInterrupted as false since there are no interruptions initially
 
   registerService(
     process.env.SERVICE_REGISTRY + REGISTER_SERVICE_ROUTE,
