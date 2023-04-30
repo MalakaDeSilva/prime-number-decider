@@ -77,18 +77,8 @@ export function startElection(app: express.Application, nodeId: string) {
               if (!nodesAlive) {
                 // Self is the master
                 app.set(IS_MASTER, true); // Set self as the master
-                app.set(MASTER, {
-                  ...(app.get(SELF) as Service),
-                  role: "MASTER",
-                }); // Set master as the self
-                sendCoordinatorMessage({
-                  ...(app.get(SELF) as Service),
-                  role: "MASTER",
-                });
-                updateRegistryWithNewMaster({
-                  ...(app.get(SELF) as Service),
-                  role: "MASTER",
-                });
+                app.set(MASTER, app.get(SELF) as Service); // Set master as the self
+                sendCoordinatorMessage(app.get(SELF) as Service);
               }
             })
           )
@@ -99,15 +89,8 @@ export function startElection(app: express.Application, nodeId: string) {
         // No node has a higher id than Self
         // Self is the master
         app.set(IS_MASTER, true); // Set self as the master
-        app.set(MASTER, { ...(app.get(SELF) as Service), role: "MASTER" }); // Set master as the self
-        sendCoordinatorMessage({
-          ...(app.get(SELF) as Service),
-          role: "MASTER",
-        });
-        updateRegistryWithNewMaster({
-          ...(app.get(SELF) as Service),
-          role: "MASTER",
-        });
+        app.set(MASTER, app.get(SELF) as Service); // Set master as the self
+        sendCoordinatorMessage(app.get(SELF) as Service);
       }
     } else {
       app.set(IS_INTERRUPTED, false); // Reset interrupt value to false
@@ -116,11 +99,14 @@ export function startElection(app: express.Application, nodeId: string) {
 }
 
 export function sendCoordinatorMessage(node: Service) {
+  console.log("Master found: " + node.id);
   getServices(process.env.SERVICE_REGISTRY + GET_SERVICES_ROUTE, (services) => {
     let promises: any[] = [];
 
     services.forEach((v, i) => {
-      promises.push(axios.post(v.uri + COORDINATOR_ROUTE, node));
+      if (v.id != node.id) {
+        promises.push(axios.post(v.uri + COORDINATOR_ROUTE, node));
+      }
     });
 
     // Use Promise.all to wait for all requests to finish
@@ -148,8 +134,6 @@ export function stopElection() {
 }
 
 export function updateRegistryWithNewMaster(node: Service) {
-  console.log("Master found: " + node.id);
-
   axios
     .put(process.env.SERVICE_REGISTRY + MARK_AS_MASTER, node)
     .then((value) => console.log(value.data.response))

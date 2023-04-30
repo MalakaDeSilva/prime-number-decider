@@ -24,7 +24,7 @@ export function initialize(host: string, port: number) {
   app.set(IS_MASTER, false); // Mark current node as not the master node.
 
   app.set(NODE_ID, nodeId);
-  app.set(SELF, new Service(nodeId, host, ""));
+  app.set(SELF, new Service(nodeId, extractUri(host, port), ""));
 
   app.set(IS_INTERRUPTED, false); // Set IsInterrupted as false since there are no interruptions initially
 

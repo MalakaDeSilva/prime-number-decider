@@ -5,6 +5,7 @@ import { initialize } from "./api/startup.service";
 import {
   IS_INTERRUPTED,
   IS_MASTER,
+  MASTER,
   NODE_ID,
   SELF,
   SERVICES,
@@ -46,6 +47,7 @@ app.get("/info", (req, res) => {
     self: app.get(SELF),
     is_interrupted: app.get(IS_INTERRUPTED),
     services: app.get(SERVICES),
+    master: app.get(MASTER),
   };
 
   res.status(200).json({ message: info });
