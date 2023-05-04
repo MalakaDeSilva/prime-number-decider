@@ -1,6 +1,6 @@
 import axios from "axios";
 import express from "express";
-import { Service, ServiceType } from "../model/service";
+import { Service } from "../model/service";
 import {
   COORDINATOR_ROUTE,
   ELECTION_ROUTE,
@@ -16,6 +16,8 @@ import {
 } from "../utils/Constants";
 import app from "../index";
 import { getServices } from "./startup.service";
+import { assignRoles, delegateWork } from "./master.service";
+import { addJobs, createJob } from "./job.service";
 
 interface ServerResponse {
   response: string;
@@ -57,36 +59,42 @@ export function startElection(app: express.Application, nodeId: string) {
               let nodesAlive = false; // Assume all nodes are dead
 
               responses.forEach((resp) => {
-
                 if (resp.data.message == "OK") {
                   nodesAlive = true; // If at least one node is alive, change to "true"
-                  stopElection(); // If at least one node is alive, stop the own election
+                  finishElection(() => {}); // If at least one node is alive, stop the own election
                 }
               });
 
               if (!nodesAlive) {
-                // Self is the master
-                app.set(IS_MASTER, true); // Set self as the master
-                app.set(MASTER, app.get(SELF) as Service); // Set master as the self
-                sendCoordinatorMessage(app.get(SELF) as Service);
-                stopElection();
+                finishElection(() => {
+                  // No node has a higher id than Self
+                  // Self is the master
+                  app.set(IS_MASTER, true); // Set self as the master
+                  app.set(MASTER, app.get(SELF) as Service); // Set master as the self
+                  sendCoordinatorMessage(app.get(SELF) as Service);
+                  addJobs(() =>
+                    assignRoles(() => createJob(() => delegateWork()))
+                  );
+                });
               }
             })
           )
           .catch((error) => {
             if (axios.isCancel(error)) {
-              console.log('Promise canceled:', error.message);
+              console.log("Promise canceled:", error.message);
             } else {
-              console.log('Error:', error.message);
+              console.log("Error:", error.message);
             }
           });
       } else {
-        // No node has a higher id than Self
-        // Self is the master
-        app.set(IS_MASTER, true); // Set self as the master
-        app.set(MASTER, app.get(SELF) as Service); // Set master as the self
-        stopElection();
-        sendCoordinatorMessage(app.get(SELF) as Service);
+        finishElection(() => {
+          // No node has a higher id than Self
+          // Self is the master
+          app.set(IS_MASTER, true); // Set self as the master
+          app.set(MASTER, app.get(SELF) as Service); // Set master as the self
+          sendCoordinatorMessage(app.get(SELF) as Service);
+          addJobs(() => assignRoles(() => createJob(() => delegateWork())));
+        });
       }
     }
   });
@@ -119,16 +127,17 @@ export function sendCoordinatorMessage(node: Service) {
       })
       .catch((error) => {
         if (axios.isCancel(error)) {
-          console.log('Promise canceled:', error.message);
+          console.log("Promise canceled:", error.message);
         } else {
-          console.log('Error:', error.message);
+          console.log("Error:", error.message);
         }
       });
   });
 }
 
-export function stopElection() {
+export function finishElection(callback: () => void) {
   app.set(IS_ELECTION_STOPPED, true);
+  callback();
 }
 
 export function updateRegistryWithNewMaster(node: Service) {

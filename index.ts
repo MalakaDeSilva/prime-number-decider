@@ -7,6 +7,7 @@ import {
   IS_MASTER,
   MASTER,
   NODE_ID,
+  PROPOSERS,
   SELF,
   SERVICES,
 } from "./utils/Constants";
@@ -30,15 +31,17 @@ import bullyAlgoCtrl from "./controllers/election.controller";
 import proposerCtrl from "./controllers/proposer.controller";
 import acceptorCtrl from "./controllers/acceptor.controller";
 import learnerCtrl from "./controllers/learner.controller";
+import roleCtrl from "./controllers/roles.controller";
 import { startElection } from "./api/election.service";
 
 app.use("/api/election", bullyAlgoCtrl);
 app.use("/api/proposer", proposerCtrl);
 app.use("/api/acceptor", acceptorCtrl);
 app.use("/api/learner", learnerCtrl);
+app.use("/api/roles", roleCtrl);
 
 app.get("/health-check", (req, res) => {
-  res.status(200).json({ response: "OK" });
+  res.status(200).json({ message: app.get(NODE_ID) });
 });
 
 app.get("/info", (req, res) => {
@@ -49,7 +52,10 @@ app.get("/info", (req, res) => {
     is_election_stopped: app.get(IS_ELECTION_STOPPED),
     services: app.get(SERVICES),
     master: app.get(MASTER),
+    poposers: (app.get(IS_MASTER) as boolean) ? app.get(PROPOSERS) : undefined,
   };
+
+  console.log(app);
 
   res.status(200).json({ message: info });
 });
@@ -75,7 +81,7 @@ const server = app.listen(process.argv[2] || process.env.PORT, () => {
   }, process.argv[2]);
 
   console.log(
-    `API id: ${app.get(NODE_ID)}, listening on: http://${address}:${port}`
+    `Node id: ${app.get(NODE_ID)}, listening on: http://${address}:${port}`
   );
 });
 
