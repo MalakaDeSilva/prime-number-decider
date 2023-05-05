@@ -41,6 +41,6 @@ Once the nodes are started, find the _learner_ node from the service registry ([
 > Get current tasks: [https://{learner-host}:{learner-port}/api/learner/get-tasks](https://{host}:{port}/api/learner/get-tasks)
 
 ## .env format
->HOST={HOST}
->PORT={PORT}
->SERVICE_REGISTRY=http://{HOST}:{PORT}
+- HOST={HOST}
+- PORT={PORT}
+- SERVICE_REGISTRY=http://{HOST}:{PORT}
