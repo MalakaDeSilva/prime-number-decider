@@ -5,8 +5,7 @@ This project uses [***pnpm***](https://pnpm.io/) project manager to manage node 
 
 ## How to run
 
-Service Registry needs to be started first. When new processes are created, they will be able to register themselves on the registry. By default Service Registry will be started on port 8000. By double clicking on
-***start.cmd*** file will create 6 process on ports,
+Service Registry needs to be started first. When new processes are created, they will be able to register themselves on the registry. By default Service Registry will be started on port 8000. By double clicking on ***start.cmd*** file will create 6 process on ports,
 
 - 3001
 - 4001
