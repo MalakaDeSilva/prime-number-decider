@@ -18,7 +18,9 @@ export function verifyResult(
   result: string,
   callback: () => void
 ) {
-  let acceptorResult = number % divisor == 0 ? PRIME : NOT_PRIME;
+  let acceptorResult = number % divisor == 0 ? NOT_PRIME : PRIME;
+/* 
+  console.log(`${number} : ${divisor} : ${result} : ${acceptorResult}`); */
 
   if (result == acceptorResult) {
     callback();
@@ -29,15 +31,14 @@ export function notifyLearner(propResult: ProposerResult) {
   getLearner((learner) => {
     axios
       .post(learner.uri + NOTIFY_LEARNER, {
+        taskId: propResult.taskId,
         result: propResult.result,
         proposerId: propResult.nodeId,
       })
       .then((res) => {
-        if (res.status == 200) {
-          console.log("Learner was notifed with the result.");
-        }
+        console.log(res.data.response);
       })
-      .catch((err) => console.log(err.message));
+      .catch((err) => console.log(err));
   });
 }
 

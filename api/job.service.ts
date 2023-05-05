@@ -1,8 +1,9 @@
 import { CURRENT_JOB, IN_PROGRESS, PENDING, PRIME } from "../utils/Constants";
-import { jobs } from "../data/tasks";
+import { jobs } from "../data/jobs";
 import { Job, JobType } from "../model/job";
 import fs from "fs";
 import app from "../index";
+import { randomIntFromInterval } from "../utils/Utils";
 
 export function addJobs(callback: () => void) {
   // Open a read stream to the file
@@ -14,7 +15,7 @@ export function addJobs(callback: () => void) {
 
     lines.forEach((line) => {
       let job = new Job(
-        Date.now().toString(),
+        `${Date.now()}${randomIntFromInterval(10, 20)}`,
         parseInt(line),
         [],
         PENDING,
@@ -36,16 +37,13 @@ export function addJobs(callback: () => void) {
   });
 }
 
-export function updateJob(job: JobType) {
+export function updateJob(job: JobType, callback: () => void) {
   const idx = jobs.findIndex((_job) => _job.id == job.id);
 
   if (idx != -1) {
     jobs[idx] = { ...jobs[idx], status: job.status, result: job.result };
   }
-
-  console.log("======================= Jobs update. =======================");
-  console.log(jobs);
-  
+  callback();
 }
 
 export function createJob(callback: () => void) {

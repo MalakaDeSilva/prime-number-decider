@@ -64,7 +64,7 @@ export function findPrimeOrNotPrime(task: Task) {
             number: task.number,
           })
           .then((res) => {
-            if (res.status == 200) "Acceptor accepted the result.";
+            console.log(res.data.response);
           })
           .catch((err) => console.log(err.message));
       })

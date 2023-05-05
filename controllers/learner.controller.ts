@@ -1,10 +1,10 @@
-import { CURRENT_JOB, DONE, NOT_PRIME, PENDING } from "../utils/Constants";
-import { createJob, getJob, updateJob } from "../api/job.service";
+import { PENDING } from "../utils/Constants";
+import { createJob } from "../api/job.service";
 import express from "express";
-import { JobType } from "../model/job";
-import app from "../index";
-import { jobs } from "../data/tasks";
+import { jobs } from "../data/jobs";
 import { assignRoles, delegateWork } from "../api/master.service";
+import { handleVotes } from "../api/learner.service";
+import { Vote } from "../model/vote";
 
 const router = express.Router();
 
@@ -13,29 +13,23 @@ router.get("/get-tasks", (req, res) => {
 });
 
 router.post("/notify-learner", (req, res) => {
-  let { result, proposerId } = req.body;
+  let { taskId, result, proposerId } = req.body;
 
-  let currentJob = app.get(CURRENT_JOB) as JobType;
+  handleVotes(new Vote(taskId, proposerId, result), () => {
+    if (jobs.some((job) => job.status == PENDING)) {
+      assignRoles(() =>
+        createJob(() => {
+          setTimeout(() => {
+            delegateWork();
+          }, 1000);
+        })
+      );
+    }
+  });
 
-  if (result == NOT_PRIME) {
-    updateJob({ ...currentJob, status: DONE, result });
-  } else {
-    updateJob({ ...currentJob, status: DONE });
-  }
-
-  if (jobs.some((job) => job.status == PENDING)) {
-    //console.log("##############################################################################################");
-
-    assignRoles(() =>
-      createJob(() => {
-        setTimeout(() => {
-          delegateWork();
-        }, 40000);
-      })
-    );
-  }
-
-  res.status(200).json({ response: "Accepted the answer." });
+  res
+    .status(200)
+    .json({ response: `Accepted the answer ${result} for task: ${taskId}` });
 });
 
 export default router;

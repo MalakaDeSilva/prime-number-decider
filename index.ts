@@ -55,8 +55,6 @@ app.get("/info", (req, res) => {
     poposers: (app.get(IS_MASTER) as boolean) ? app.get(PROPOSERS) : undefined,
   };
 
-  console.log(app);
-
   res.status(200).json({ message: info });
 });
 

@@ -20,15 +20,19 @@ router.post("/send-result", (req, res) => {
 
   if (result == PRIME) {
     notifyLearner(propResult);
+    res
+      .status(200)
+      .json({ response: `Result ${result} is accepted for task: ${jobId}` });
   } else if (result == NOT_PRIME) {
     verifyResult(number, divisor, result, () => {
       notifyLearner(propResult);
+      res
+        .status(200)
+        .json({ response: `Result ${result} is accepted for task: ${jobId}` });
     });
   } else {
     //
   }
-
-  res.status(200).json({ response: "Result is accepted" });
 });
 
 export default router;
