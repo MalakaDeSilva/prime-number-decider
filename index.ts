@@ -84,9 +84,14 @@ const server = app.listen(process.argv[2] || process.env.PORT, () => {
     `Node id: ${app.get(NODE_ID)}, listening on: ${extractUri(address, port)}`
   );
 
-  setupSideCar(extractUri(address, port)).listen(port + 500, () => {
-    console.log(`Sidecar is listening on: ${extractUri(address, port + 500)}`);
-  });
+  setupSideCar(extractUri(address, port), app.get(NODE_ID)).listen(
+    port + 500,
+    () => {
+      console.log(
+        `Sidecar is listening on: ${extractUri(address, port + 500)}`
+      );
+    }
+  );
 });
 
 export default app;
