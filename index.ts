@@ -33,6 +33,8 @@ import acceptorCtrl from "./controllers/acceptor.controller";
 import learnerCtrl from "./controllers/learner.controller";
 import roleCtrl from "./controllers/roles.controller";
 import { startElection } from "./api/election.service";
+import { setupSideCar } from "./sidecar";
+import { extractUri } from "./utils/Utils";
 
 app.use("/api/election", bullyAlgoCtrl);
 app.use("/api/proposer", proposerCtrl);
@@ -69,7 +71,7 @@ app.use((req, res, next) => {
 
 const server = app.listen(process.argv[2] || process.env.PORT, () => {
   const { address, port } = server.address() as AddressInfo;
-  initialize(address, port);
+  initialize(address, port + 500);
 
   setTimeout(() => {
     if (!app.get(IS_ELECTION_STOPPED) as boolean) {
@@ -79,8 +81,12 @@ const server = app.listen(process.argv[2] || process.env.PORT, () => {
   }, process.argv[2]);
 
   console.log(
-    `Node id: ${app.get(NODE_ID)}, listening on: http://${address}:${port}`
+    `Node id: ${app.get(NODE_ID)}, listening on: ${extractUri(address, port)}`
   );
+
+  setupSideCar(extractUri(address, port)).listen(port + 500, () => {
+    console.log(`Sidecar is listening on: ${extractUri(address, port + 500)}`);
+  });
 });
 
 export default app;
