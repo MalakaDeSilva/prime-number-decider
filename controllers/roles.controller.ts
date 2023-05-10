@@ -16,7 +16,7 @@ router.get("/assign-role/:role", (req, res) => {
       ...(app.get(SELF) as Service),
       role,
     })
-    .then((res) => console.log(res.data.response))
+    .then((res) => console.log(`Service accepted the role: ${role}`))
     .catch((err) => console.log(err.message));
 
   res.status(200).json({ message: "Role is accepted." });
